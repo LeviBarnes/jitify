@@ -20,6 +20,10 @@ ifeq ($(CXX14),1)
 	NVFLAGS += -std=c++14
 endif
 
+ifeq ($(DEBUG), 1)
+	CXXFLAGS += -g
+	NVFLAGS += -g -G
+endif
 EMBED_BEGIN = -rdynamic -Wl,-b,binary,
 EMBED_END   = ,-b,default
 
@@ -62,7 +66,7 @@ stringify: stringify.cpp
 	$(CXX) -o $@ $< -O3 -Wall
 
 K_test_kernel.o: K_test.cu
-	$(NVCC) -rdc=true -c -o $@ $< $(NVFLAGS) $(PROTEUS_INC) $(INC)
+	$(NVCC) -c -o $@ $< $(NVFLAGS) $(PROTEUS_INC) $(INC)
 
 K_test:K_test_harness.cu  K_test_kernel.o
 	$(NVCC) -o $@ $< K_test_kernel.o $(NVLFAGS) $(LIB)
