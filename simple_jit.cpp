@@ -31,7 +31,7 @@
     and call kernels.
  */
 
-#define USE_JITIFY 1
+#define USE_JITIFY 0
 #if USE_JITIFY
 #define JITIFY_ENABLE_EMBEDDED_FILES 1
 //#define JITIFY_PRINT_INSTANTIATION 1
@@ -64,7 +64,9 @@
     nvrtcResult result = x;                                       \
     if (result != NVRTC_SUCCESS) {                                \
       std::cerr << "\nerror: " #x " failed with error "           \
-                << nvrtcGetErrorString(result) << '\n';           \
+                << nvrtcGetErrorString(result);                   \
+      std::cerr << " (" << __FILE__ << ":" << __LINE__ << ":" << __func__ \
+                << "())" << std::endl;                                    \
       exit(1);                                                    \
     }                                                             \
   } while(0)
@@ -74,8 +76,8 @@
     if (call != CUDA_SUCCESS) {                                           \
       const char* str;                                                    \
       cuGetErrorName(call, &str);                                         \
-      std::cout << "(CUDA) returned " << str;                             \
-      std::cout << " (" << __FILE__ << ":" << __LINE__ << ":" << __func__ \
+      std::cerr << "(CUDA) returned " << str;                             \
+      std::cerr << " (" << __FILE__ << ":" << __LINE__ << ":" << __func__ \
                 << "())" << std::endl;                                    \
       return false;                                                       \
     }                                                                     \
@@ -101,6 +103,11 @@ std::istream* file_callback(std::string filename, std::iostream& tmp_stream) {
     return 0;
   }
 }
+char * chomp_first_line(const char *in) {
+   char* ret = const_cast<char*>(in);
+   while(*ret != '\n') ret++;
+   return ++ret;
+}
 
 template <typename T>
 bool test_mathlibs() {
@@ -109,7 +116,7 @@ bool test_mathlibs() {
 #include "K_test.cu.jit"
 
   // Compile the program for compute_20 with fmad // disabled.
-  char *opts[] = {"--pre-include=stdint.h", "--use_fast_math", "-I" CUDA_INC_DIR, 
+  char *opts[] = {"--use_fast_math", "-I" CUDA_INC_DIR, 
              "--gpu-architecture=compute_60"};  
 #if USE_JITIFY
   using jitify::reflection::instance_of;
@@ -136,13 +143,13 @@ bool test_mathlibs() {
 
   nvrtcProgram prog;
   NVRTC_SAFE_CALL(    nvrtcCreateProgram(&prog,         // prog 
-                      K_test_cu,         // buffer
+                      chomp_first_line(K_test_cu),         // buffer
                       "K_test.cu",    // name                       
                       0,             // numHeaders                       
                       NULL,          // headers                       
                       NULL));        // includeNames
   nvrtcResult compileResult = nvrtcCompileProgram(prog,  // prog
-                4,     // numOptions                                                  
+                3,     // numOptions                                                  
                 opts); // options
   // Obtain compilation log from the program.  
   size_t logSize;  
@@ -214,9 +221,7 @@ bool test_mathlibs() {
   void* arr[] = {reinterpret_cast<void*>(&d_fields),
                reinterpret_cast<void*>(&d_scalars),
                reinterpret_cast<void*>(&n) };
-  cuLaunchKernel(kernel, 128, 1, 1, 32, 1, 1, 0, 0, arr, 0);
-  CHECK_CUDA( cuModuleUnload(module) );
-  CHECK_CUDA( cuCtxDestroy(context) );
+  CHECK_CUDA( cuLaunchKernel(kernel, 128, 1, 1, 32, 1, 1, 0, 0, arr, 0) );
 #endif
   cudaMemcpy(h_C, d_C, n*sizeof(T), cudaMemcpyDeviceToHost);
   cudaFree(d_A);
@@ -224,6 +229,8 @@ bool test_mathlibs() {
   cudaFree(d_C);
   cudaFree(d_fields);
   cudaFree(d_scalars);
+  CHECK_CUDA( cuModuleUnload(module) );
+  CHECK_CUDA( cuCtxDestroy(context) );
   free(h_fields);
   free(h_scalars);
 

@@ -18,7 +18,7 @@ struct cmplx
 
 };
 
-__global__ void K_test(float ** fields, float const * scalars, size_t n)
+extern "C" __global__ void K_test(float ** fields, float const * scalars, size_t n)
 {
   typedef float rscalar_t;
   typedef cmplx<float> cscalarDev_t;
