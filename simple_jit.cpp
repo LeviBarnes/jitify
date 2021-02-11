@@ -118,8 +118,7 @@ bool test_mathlibs() {
 #include "K_test.cu.jit"
 
   // Compile the program for compute_20 with fmad // disabled.
-  char *opts[] = {"--use_fast_math", "-I" CUDA_INC_DIR, 
-             "--gpu-architecture=compute_60"};  
+  char *opts[] = {"--use_fast_math", "--gpu-architecture=compute_60", "-I" CUDA_INC_DIR};  
 #if USE_JITIFY
   using jitify::reflection::instance_of;
   using jitify::reflection::NonType;
@@ -154,6 +153,7 @@ bool test_mathlibs() {
                       0,             // numHeaders                       
                       NULL,          // headers                       
                       NULL));        // includeNames
+  nvtxRangePop(); nvtxRangePush("Compile Program");
   nvrtcResult compileResult = nvrtcCompileProgram(prog,  // prog
                 3,     // numOptions                                                  
                 opts); // options
