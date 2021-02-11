@@ -1,5 +1,4 @@
-#include <thrust/complex.h>
-#include <stdio.h>
+//#include <thrust/complex.h>
 template <typename T>
 struct cmplx
 {
@@ -22,8 +21,8 @@ struct cmplx
 __global__ void K_test(float ** fields, float const * scalars, size_t n)
 {
   typedef float rscalar_t;
-  //typedef cmplx<float> cscalarDev_t;
-  typedef thrust::complex<rscalar_t> cscalarDev_t;
+  typedef cmplx<float> cscalarDev_t;
+  //typedef thrust::complex<rscalar_t> cscalarDev_t;
   // Complex multiply.
   size_t tid = threadIdx.x + blockIdx.x * blockDim.x;
   for(; tid < n; tid += blockDim.x * gridDim.x)

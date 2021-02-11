@@ -115,6 +115,7 @@
 #define NVRTC_GET_TYPE_NAME 1
 #endif
 #include <nvrtc.h>
+#include <nvToolsExt.h>
 
 // For use by get_current_executable_path().
 #ifdef __linux__
@@ -2591,6 +2592,7 @@ inline nvrtcResult compile_kernel(std::string program_name,
                                   std::string instantiation = "",
                                   std::string* log = 0, std::string* ptx = 0,
                                   std::string* mangled_instantiation = 0) {
+  nvtxRangePushA("compile_kernel");
   std::string program_source = sources[program_name];
   // Build arrays of header names and sources
   std::vector<const char*> header_names_c;
@@ -2661,6 +2663,7 @@ inline nvrtcResult compile_kernel(std::string program_name,
     log->assign(vlog.data(), logsize);
   }
   if (ret != NVRTC_SUCCESS) {
+    nvtxRangePop();
     return ret;
   }
 
@@ -2694,6 +2697,7 @@ inline nvrtcResult compile_kernel(std::string program_name,
 
   CHECK_NVRTC(nvrtcDestroyProgram(&nvrtc_program));
 #undef CHECK_NVRTC
+  nvtxRangePop();
   return NVRTC_SUCCESS;
 }
 
@@ -2705,6 +2709,7 @@ inline void load_program(std::string const& cuda_source,
                          std::vector<std::string>* program_options,
                          std::string* program_name) {
   // Extract include paths from compile options
+  nvtxRangePushA("load_program");
   std::vector<std::string>::iterator iter = program_options->begin();
   while (iter != program_options->end()) {
     std::string const& opt = *iter;
@@ -2719,6 +2724,7 @@ inline void load_program(std::string const& cuda_source,
   // Load program source
   if (!detail::load_source(cuda_source, *program_sources, "", *include_paths,
                            file_callback, program_name)) {
+    nvtxRangePop();
     throw std::runtime_error("Source not found: " + cuda_source);
   }
 
@@ -2730,6 +2736,7 @@ inline void load_program(std::string const& cuda_source,
     if (!detail::load_source(header, *program_sources, "", *include_paths,
                              file_callback, nullptr, &header_fullpaths)) {
       // **TODO: Deal with source not found
+      nvtxRangePop();
       throw std::runtime_error("Source not found: " + header);
     }
   }
@@ -2771,6 +2778,7 @@ inline void load_program(std::string const& cuda_source,
 #endif
       // There was a non include-related compilation error
       // TODO: How to handle error?
+      nvtxRangePop();
       throw std::runtime_error("Runtime compilation failed");
     }
 
@@ -2809,6 +2817,7 @@ inline void load_program(std::string const& cuda_source,
              it != program_sources->end(); ++it) {
           std::cout << "  " << it->first << std::endl;
         }
+        nvtxRangePop();
         throw std::out_of_range(include_parent +
                                 " not in loaded sources!"
                                 " This may be due to a header being loaded by"
@@ -2833,9 +2842,11 @@ inline void load_program(std::string const& cuda_source,
       std::cout << std::endl;
     }
 #endif
+    nvtxRangePop();
     throw std::runtime_error(std::string("NVRTC error: ") +
                              nvrtcGetErrorString(ret));
   }
+  nvtxRangePop();
 }
 
 inline void instantiate_kernel(
@@ -2845,6 +2856,7 @@ inline void instantiate_kernel(
     std::string* log, std::string* ptx, std::string* mangled_instantiation,
     std::vector<std::string>* linker_files,
     std::vector<std::string>* linker_paths) {
+  nvtxRangePushA("instantiate_kernel");
   std::vector<std::string> compiler_options;
   detail::split_compiler_and_linker_options(options, &compiler_options,
                                             linker_files, linker_paths);
@@ -2872,6 +2884,7 @@ inline void instantiate_kernel(
   std::cout << *ptx << std::endl;
   std::cout << "---------------------------------------" << std::endl;
 #endif
+  nvtxRangePop();
 }
 
 inline void get_1d_max_occupancy(CUfunction func,

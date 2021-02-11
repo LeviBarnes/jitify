@@ -46,7 +46,7 @@ endif
 INC += -I$(CUDA_INC_DIR)
 INC += -I.
 PROTEUS_INC = -I/slowfs/ltgpe_s1_us03/levi/build/saltM_Integ-current/proteus/proteuslib/
-LIB += -ldl -L$(CUDA_LIB_DIR) -lcuda -lcudart -lnvrtc
+LIB += -ldl -L$(CUDA_LIB_DIR) -lcuda -lcudart -lnvrtc -lnvToolsExt
 
 HEADERS = jitify.hpp \
           example_headers/my_header1.cuh.jit \
