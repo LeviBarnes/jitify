@@ -446,5 +446,5 @@ int main(int argc, char* argv[]) {
 
   return (!test_simple_result + !test_simple_experimental_result +
           !test_kernels_result + !test_parallel_for_result +
-          !test_constant_result);
+          !test_constant_result + !test_mathlibs_result);
 }
