@@ -48,6 +48,8 @@
 #include <nvrtc.h>
 #endif
 
+#include <nvToolsExt.h>
+
 
 //#include "example_headers/my_header1.cuh.jit"
 //#ifdef LINUX  // Only supported by gcc on Linux (defined in Makefile)
@@ -137,10 +139,14 @@ bool test_mathlibs() {
       //,file_callback);
 #else
   //Initialize CUDA context
+  nvtxRangePushA("Init");
   CHECK_CUDA(cuInit(0));  
   CUdevice cuDevice;  CHECK_CUDA(cuDeviceGet(&cuDevice, 0));  
   CUcontext context;  CHECK_CUDA(cuCtxCreate(&context, 0, cuDevice));  
+  nvtxRangePop();
 
+  nvtxRangePushA("Compile");
+  nvtxRangePushA("CreateProgram");
   nvrtcProgram prog;
   NVRTC_SAFE_CALL(    nvrtcCreateProgram(&prog,         // prog 
                       chomp_first_line(K_test_cu),         // buffer
@@ -151,26 +157,36 @@ bool test_mathlibs() {
   nvrtcResult compileResult = nvrtcCompileProgram(prog,  // prog
                 3,     // numOptions                                                  
                 opts); // options
-  // Obtain compilation log from the program.  
-  size_t logSize;  
-  NVRTC_SAFE_CALL(nvrtcGetProgramLogSize(prog, &logSize));
-  char *log = new char[logSize];  
-  NVRTC_SAFE_CALL(nvrtcGetProgramLog(prog, log));  
-  std::cout << log << '\n';
-  delete[] log;
-  if (compileResult != NVRTC_SUCCESS) {    exit(1);  }
+  nvtxRangePop();
+  if (compileResult != NVRTC_SUCCESS) {    
+     nvtxRangePushA("Report NVRTC Errors");
+     // Obtain compilation log from the program.  
+     size_t logSize;  
+     NVRTC_SAFE_CALL(nvrtcGetProgramLogSize(prog, &logSize));
+     char *log = new char[logSize];  
+     NVRTC_SAFE_CALL(nvrtcGetProgramLog(prog, log));  
+     std::cout << log << '\n';
+     delete[] log;
+     nvtxRangePop();
+     exit(1);  
+  }
+  nvtxRangePushA("Get PTX");
   // Obtain PTX from the program.  
   size_t ptxSize;  
   NVRTC_SAFE_CALL(nvrtcGetPTXSize(prog, &ptxSize));
   char *ptx = new char[ptxSize];  
   NVRTC_SAFE_CALL(nvrtcGetPTX(prog, ptx));
+  nvtxRangePop();
   // Destroy the program.  
   NVRTC_SAFE_CALL(nvrtcDestroyProgram(&prog));
   // Load the generated PTX and get a handle to the SAXPY kernel.  
   CUmodule module;  
   CUfunction kernel;  
+  nvtxRangePushA("Load and Get function");
   CHECK_CUDA(cuModuleLoadDataEx(&module, ptx, 0, 0, 0));  
   CHECK_CUDA(cuModuleGetFunction(&kernel, module, "K_test"));
+  nvtxRangePop();
+  nvtxRangePop();
 #endif
       
 
