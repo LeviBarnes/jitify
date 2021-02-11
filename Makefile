@@ -59,6 +59,9 @@ JITIFY_EXAMPLE_DEFINES = -DCUDA_INC_DIR="\"$(CUDA_INC_DIR)\""
 jitify_example: jitify_example.cpp $(HEADERS) K_test.cu.jit
 	$(CXX) -o $@ $< $(CXXFLAGS) $(INC) $(LIB) $(EMBED) $(JITIFY_EXAMPLE_DEFINES)
 
+simple_jit: simple_jit.cpp $(HEADERS) K_test.cu.jit
+	$(CXX) -o $@ $< $(CXXFLAGS) $(INC) $(LIB) $(EMBED) $(JITIFY_EXAMPLE_DEFINES)
+
 %.jit: % stringify
 	./stringify $< > $@
 
