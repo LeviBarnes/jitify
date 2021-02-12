@@ -181,9 +181,10 @@ bool test_mathlibs() {
   NVRTC_SAFE_CALL(nvrtcDestroyProgram(&prog));
   // Load the generated PTX and get a handle to the SAXPY kernel.  
   CUmodule module;  
-  CUfunction kernel;  
+  CUfunction kernel = 0;  
   nvtxRangePushA("Load and Get function");
   CHECK_CUDA(cuModuleLoadDataEx(&module, ptx, 0, 0, 0));  
+  delete[] ptx;
   CHECK_CUDA(cuModuleGetFunction(&kernel, module, "K_test"));
   nvtxRangePop();
   nvtxRangePop();
